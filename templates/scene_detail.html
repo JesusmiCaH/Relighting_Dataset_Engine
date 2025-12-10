@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{{ url_for('view_gallery') }}">&larr; Back to Gallery</a>
+</div>
+
+<h1>{{ scene_name }}</h1>
+
+<div class="row">
+    {% for img in images %}
+    <div class="col-md-3 col-sm-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <img src="{{ url_for('serve_file', filepath='output/' + scene_name + '/' + img) }}" class="card-img-top"
+                style="object-fit: cover; height: 250px;">
+            <div class="card-body p-2 text-center">
+                <strong>{{ img }}</strong>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

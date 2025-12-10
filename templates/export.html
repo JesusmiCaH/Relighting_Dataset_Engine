@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Export Dataset</h1>
+<p class="lead">Pack and upload your processed dataset to Google Drive.</p>
+
+<div class="card p-4 shadow-sm">
+    <h4>Google Drive Backup</h4>
+    <p>This will zip the <code>output_dataset/</code> folder and upload it to your Google Drive.</p>
+
+    <div class="alert alert-warning">
+        <strong>Prerequisites:</strong>
+        <ul>
+            <li>Ensure <code>credentials.json</code> is in the project root.</li>
+            <li>First run requires browser authentication (check terminal/pop-up).</li>
+        </ul>
+    </div>
+
+    <form action="/api/backup" method="post">
+        <button type="submit" class="btn btn-success btn-lg">
+            Start Backup
+        </button>
+    </form>
+</div>
+{% endblock %}
