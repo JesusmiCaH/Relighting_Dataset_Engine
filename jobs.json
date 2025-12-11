@@ -141,15 +141,15 @@
       },
       {
         "prompt": "volumetric god rays beaming from a skylight",
-        "status": "done"
+        "status": "pending"
       },
       {
         "prompt": "rim lighting emphasizing silhouettes against a dark background",
-        "status": "done"
+        "status": "pending"
       },
       {
         "prompt": "hard spotlight highlighting the center of the room",
-        "status": "processing"
+        "status": "pending"
       },
       {
         "prompt": "warm tungsten interior lamp lighting, cozy atmosphere",
@@ -216,7 +216,7 @@
   "000007": {
     "total": 25,
     "status": "processing",
-    "progress": 1,
+    "progress": 25,
     "tasks": [
       {
         "prompt": "soft morning sunlight streaming from the left window",
@@ -224,198 +224,198 @@
       },
       {
         "prompt": "bright mid-day sunlight from directly above, hard shadows",
-        "status": "processing"
+        "status": "done"
       },
       {
         "prompt": "warm golden hour sunset light casting long horizontal shadows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cool blue hour twilight entering from windows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "soft silvery moonlight filtering through curtains",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "overcast day diffuse flat lighting, no strong shadows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "strong dramatic side lighting from the right",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "volumetric god rays beaming from a skylight",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "rim lighting emphasizing silhouettes against a dark background",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "hard spotlight highlighting the center of the room",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "warm tungsten interior lamp lighting, cozy atmosphere",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cool white fluorescent office ceiling lights, clinical feel",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "dim candle light flickering on surfaces, warm glow",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cold blue LED strip lighting accents",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "neutral studio softbox lighting, balanced and even",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "fireplace glow emanating from the hearth",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "flickering TV static blue light in a dark room",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cyberpunk neon pink and cyan mixed lighting",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "film noir high contrast directional shadow, black and white aesthetic",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "intense red emergency alarm rotating light style",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "ethereal dreamy soft focus glow, angels breath",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "underwater caustic lighting patterns, aqua blue",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "disco ball multi-colored reflections on walls",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "bioluminescent alien ambient glow, purple and green",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "low angle horror style up-lighting from the floor",
-        "status": "pending"
+        "status": "done"
       }
     ]
   },
   "000001": {
     "total": 25,
-    "status": "queued",
-    "progress": 0,
+    "status": "processing",
+    "progress": 22,
     "tasks": [
       {
         "prompt": "soft morning sunlight streaming from the left window",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "bright mid-day sunlight from directly above, hard shadows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "warm golden hour sunset light casting long horizontal shadows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cool blue hour twilight entering from windows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "soft silvery moonlight filtering through curtains",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "overcast day diffuse flat lighting, no strong shadows",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "strong dramatic side lighting from the right",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "volumetric god rays beaming from a skylight",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "rim lighting emphasizing silhouettes against a dark background",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "hard spotlight highlighting the center of the room",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "warm tungsten interior lamp lighting, cozy atmosphere",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cool white fluorescent office ceiling lights, clinical feel",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "dim candle light flickering on surfaces, warm glow",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cold blue LED strip lighting accents",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "neutral studio softbox lighting, balanced and even",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "fireplace glow emanating from the hearth",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "flickering TV static blue light in a dark room",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "cyberpunk neon pink and cyan mixed lighting",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "film noir high contrast directional shadow, black and white aesthetic",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "intense red emergency alarm rotating light style",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "ethereal dreamy soft focus glow, angels breath",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "underwater caustic lighting patterns, aqua blue",
-        "status": "pending"
+        "status": "done"
       },
       {
         "prompt": "disco ball multi-colored reflections on walls",
-        "status": "pending"
+        "status": "processing"
       },
       {
         "prompt": "bioluminescent alien ambient glow, purple and green",
