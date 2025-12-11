@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px;">
+    <form action="{{ url_for('save_settings') }}" method="POST">
+        <div class="card"
+            style="padding: 24px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+            <h3 style="margin-top: 0; margin-bottom: 20px;">Generation Parameters</h3>
+
+            <div class="form-group">
+                <label>Sampling Steps</label>
+                <input type="number" name="steps" value="{{ settings.get('steps', 20) }}" min="1" max="100">
+                <small>Higher steps = better quality but slower (Default: 20)</small>
+            </div>
+
+            <div class="form-group">
+                <label>Guidance Scale (CFG)</label>
+                <input type="number" name="cfg" value="{{ settings.get('cfg', 3.5) }}" step="0.1" min="1.0" max="20.0">
+                <small>How closely to follow the prompt (Default: 3.5)</small>
+            </div>
+
+            <div class="form-group">
+                <label>Sampler Name</label>
+                <select name="sampler_name">
+                    <option value="euler" {% if settings.get('sampler_name')=='euler' %}selected{% endif %}>Euler
+                    </option>
+                    <option value="euler_ancestral" {% if settings.get('sampler_name')=='euler_ancestral' %}selected{%
+                        endif %}>Euler Ancestral</option>
+                    <option value="dpmpp_2m" {% if settings.get('sampler_name')=='dpmpp_2m' %}selected{% endif %}>DPM++
+                        2M</option>
+                    <option value="dpmpp_sde" {% if settings.get('sampler_name')=='dpmpp_sde' %}selected{% endif %}>
+                        DPM++ SDE</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Scheduler</label>
+                <select name="scheduler">
+                    <option value="simple" {% if settings.get('scheduler')=='simple' %}selected{% endif %}>Simple
+                    </option>
+                    <option value="normal" {% if settings.get('scheduler')=='normal' %}selected{% endif %}>Normal
+                    </option>
+                    <option value="karras" {% if settings.get('scheduler')=='karras' %}selected{% endif %}>Karras
+                    </option>
+                </select>
+            </div>
+
+            <!-- New Block: Crawler Configuration -->
+            <h3
+                style="margin-top: 32px; margin-bottom: 20px; border-top: 1px solid var(--border-color); padding-top: 24px;">
+                Crawler Configuration</h3>
+
+            <div class="form-group">
+                <label>Crawler Source</label>
+                <select name="crawler_source">
+                    <option value="Google" {% if settings.get('crawler_source', 'Google' )=='Google' %}selected{% endif
+                        %}>Google</option>
+                    <option value="Bing" {% if settings.get('crawler_source')=='Bing' %}selected{% endif %}>Bing
+                    </option>
+                    <option value="Pinterest" {% if settings.get('crawler_source')=='Pinterest' %}selected{% endif %}>
+                        Pinterest</option>
+                </select>
+                <small>Select the search engine for finding images.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Images Searched per Batch</label>
+                <input type="number" name="images_per_batch" value="{{ settings.get('images_per_batch', 10) }}" min="1"
+                    max="100">
+                <small>Number of images to fetch in a single search request (Default: 10)</small>
+            </div>
+
+            <div style="margin-top: 32px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settings</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 500;
+        font-size: 14px;
+        color: var(--text-secondary);
+    }
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px;
+        background: #000;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-sm);
+        color: #fff;
+        font-family: inherit;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: var(--accent-color);
+        outline: none;
+    }
+
+    .form-group small {
+        display: block;
+        margin-top: 6px;
+        font-size: 12px;
+        color: #666;
+    }
+</style>
+{% endblock %}

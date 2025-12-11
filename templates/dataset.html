@@ -1,27 +1,371 @@
 {% extends "base.html" %}
 
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Input Dataset ({{ images|length }})</h1>
-    <form action="/api/process" method="post">
-        <button type="submit" class="btn btn-warning">Start Processing (ComfyUI)</button>
+{% block title %}Albums (Output Dataset){% endblock %}
+
+{% block actions %}
+<div style="display: flex; gap: 10px;">
+    <!-- Process All -->
+    <form action="{{ url_for('run_processor') }}" method="post" style="display:inline;">
+        <button type="submit" class="control-btn tooltip-bottom" data-tooltip="Process All (Start Queue)">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+        </button>
     </form>
-</div>
-
-<p class="text-muted">These images are waiting to be processed by the ComfyUI script.</p>
-
-<div class="row">
-    {% for img in images %}
-    <div class="col-md-2 col-sm-4">
-        <div class="card img-card p-2">
-            <img src="{{ url_for('serve_file', filepath='input/' + img) }}" class="img-preview" style="height: 150px;">
-            <small class="text-muted mt-1 text-truncate">{{ img }}</small>
+    <!-- Inspect Queue Wrapper -->
+    <div style="position: relative;">
+        <button id="queueBtn" type="button" class="control-btn tooltip-bottom" onclick="toggleQueuePopover(event)"
+            data-tooltip="Inspect Task Queue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+        </button>
+        <!-- Queue Popover -->
+        <div id="queuePopover" class="queue-popover">
+            <h3
+                style="margin-top: 0; font-size: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; margin-bottom: 10px;">
+                Task Queue</h3>
+            <ul id="queueList" style="list-style: none; padding: 0; margin: 0;">
+                <!-- Populated by JS -->
+            </ul>
         </div>
     </div>
-    {% else %}
-    <div class="col-12">
-        <div class="alert alert-secondary">No images in dataset. Approve some from the Buffer first.</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="grid">
+    {% for album in albums %}
+    <div class="card album-card" id="card-{{ album }}">
+        <a href="{{ url_for('view_scene', scene_name=album) }}" class="card-image-wrap">
+            <img src="{{ url_for('serve_file', filepath='output/' + album + '/light0.jpg') }}" loading="lazy">
+
+        </a>
+        <div class="card-footer" style="padding: 0; display: flex; flex-direction: column; gap: 6px;">
+            <!-- Top Controls -->
+            <div
+                style="padding: 12px 14px 4px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                <!-- Left: Title & Counter -->
+                <div style="min-width: 0; flex: 1;">
+                    <div class="card-title" title="{{ album }}"
+                        style="font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">
+                        {{ album }}</div>
+                    <div id="status-{{ album }}"
+                        style="font-size: 11px; color: var(--text-secondary); font-family: monospace;">0/25</div>
+                </div>
+
+                <!-- Right: Action Button -->
+                <div class="album-actions">
+                    <form action="{{ url_for('run_relight') }}" method="POST"
+                        onsubmit="return confirm('Continue processing this album?');">
+                        <input type="hidden" name="scene_name" value="{{ album }}">
+                        <button type="submit" class="play-btn tooltip-bottom" title="Process Album"
+                            data-tooltip="Process Album">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="3">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Bottom: Progress Bar (Edge to Edge) -->
+            <progress id="progress-{{ album }}" value="0" max="25"
+                style="width: 100%; height: 6px; display: block; border: none; border-radius: 0;"></progress>
+        </div>
     </div>
     {% endfor %}
 </div>
+
+<!-- Queue Modal -->
+
+
+<style>
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        transition: var(--transition);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .card:hover {
+        border-color: #555;
+        transform: translateY(-2px);
+    }
+
+    .card-image-wrap {
+        height: 220px;
+        width: 100%;
+        background: #000;
+        position: relative;
+        display: block;
+    }
+
+    .card-image-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Shared Control Button Styles */
+    .control-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        position: relative;
+        /* Context for tooltip */
+    }
+
+    .control-btn:hover {
+        transform: translateY(-2px);
+        background: var(--bg-hover);
+        border-color: var(--accent-color);
+    }
+
+    /* Tooltip Styles */
+    [data-tooltip]:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        margin-bottom: 10px;
+        z-index: 2000;
+        opacity: 0;
+        animation: fadeIn 0.2s forwards;
+    }
+
+    /* Tooltip Bottom Variant */
+    .tooltip-bottom[data-tooltip]:hover::after {
+        bottom: auto;
+        top: 100%;
+        margin-bottom: 0;
+        margin-top: 10px;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Queue Popover */
+    .queue-popover {
+        display: none;
+        position: absolute;
+        top: 120%;
+        right: 0;
+        width: 400px;
+        max-height: 60vh;
+        overflow-y: auto;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        z-index: 10000;
+        padding: 15px;
+    }
+
+    .queue-popover.active {
+        display: block;
+        animation: slideDown 0.2s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .play-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--success-color);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: 0.2s;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        position: relative;
+        /* Context for tooltip */
+    }
+
+    .play-btn:hover {
+        background: #15803d;
+        /* Darker green */
+        transform: scale(1.1);
+    }
+
+    .queue-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .status-row {
+        margin-top: 10px;
+    }
+
+    .status-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 4px;
+        align-items: center;
+    }
+
+    .status-badge {
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+
+    progress {
+        width: 100%;
+        height: 4px;
+        border: none;
+        background: #333;
+        border-radius: 2px;
+        display: block;
+        /* Fix whitespace issues */
+    }
+
+    progress::-webkit-progress-bar {
+        background: #333;
+        border-radius: 2px;
+    }
+
+    progress::-webkit-progress-value {
+        background: var(--accent-color);
+        border-radius: 2px;
+    }
+</style>
+
+<script>
+    function updateQueueStatus() {
+        fetch('{{ url_for("get_queue_status") }}')
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('queueList');
+                list.innerHTML = ''; // Rebuild list
+                let hasItems = false;
+
+                for (const [scene, info] of Object.entries(data)) {
+                    // Update Grid Progress Bars
+                    const statusEl = document.getElementById(`status-${scene}`);
+                    const progressEl = document.getElementById(`progress-${scene}`);
+                    if (statusEl && progressEl) {
+                        // User requested "12/25" style counter instead of words
+                        statusEl.innerText = `${info.progress} / 25`;
+                        progressEl.value = info.progress;
+
+                        // Optional: Color code the counter
+                        if (info.status === 'processing') statusEl.style.color = 'var(--accent-color)';
+                        else if (info.status === 'done') statusEl.style.color = 'var(--success-color)';
+                        else statusEl.style.color = 'var(--text-secondary)';
+                    }
+
+                    // Update Modal List (Granular)
+                    if (info.tasks && info.tasks.length > 0) {
+                        hasItems = true;
+                        // Header for Scene (Optional, but "Chrome style" usually flat or grouped)
+                        // Group by scene for clarity
+                        const groupHeader = document.createElement('li');
+                        groupHeader.style.padding = "8px 0";
+                        groupHeader.style.fontWeight = "bold";
+                        groupHeader.style.borderBottom = "1px solid #333";
+                        groupHeader.innerText = `Scene: ${scene}`;
+                        list.appendChild(groupHeader);
+
+                        info.tasks.forEach(task => {
+                            const li = document.createElement('li');
+                            li.className = 'queue-item';
+
+                            let icon = '⏳'; // Pending
+                            let color = '#777';
+                            if (task.status === 'processing') { icon = '🔄'; color = 'var(--accent-color)'; }
+                            if (task.status === 'done') { icon = '✅'; color = 'var(--success-color)'; }
+
+                            li.innerHTML = `
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <span>${icon}</span>
+                                    <span style="font-size: 13px; color: #eee;">${task.prompt}</span>
+                                </div>
+                                <span class="status" style="color: ${color}; font-size: 11px;">${task.status}</span>
+                            `;
+                            list.appendChild(li);
+                        });
+                    } else {
+                        // Fallback simple view if no tasks (e.g. old job or just finished)
+                        hasItems = true;
+                        const li = document.createElement('li');
+                        li.className = 'queue-item';
+                        li.innerHTML = `<span>${scene}</span><span class="status">${info.status}</span>`;
+                        list.appendChild(li);
+                    }
+                }
+
+                if (!hasItems) {
+                    list.innerHTML = '<li style="color: var(--text-secondary); text-align: center; padding: 20px;">No active tasks in queue</li>';
+                }
+            });
+    }
+
+    function toggleQueuePopover(event) {
+        event.stopPropagation();
+        const popover = document.getElementById('queuePopover');
+        popover.classList.toggle('active');
+    }
+
+    // Close when clicking outside
+    document.addEventListener('click', function (event) {
+        const popover = document.getElementById('queuePopover');
+        const btn = document.getElementById('queueBtn');
+        if (popover && popover.classList.contains('active')) {
+            if (!popover.contains(event.target) && !btn.contains(event.target)) {
+                popover.classList.remove('active');
+            }
+        }
+    });
+
+    // Poll every 2 seconds
+    setInterval(updateQueueStatus, 2000);
+    // Initial call
+    updateQueueStatus();
+</script>
 {% endblock %}

@@ -1,90 +1,248 @@
 {
-  "3": {
+  "48": {
     "inputs": {
-      "seed": 0,
-      "steps": 20,
-      "cfg": 8,
-      "sampler_name": "euler",
-      "scheduler": "normal",
-      "denoise": 1,
+      "steps": 18,
+      "width": 1248,
+      "height": 832
+    },
+    "class_type": "Flux2Scheduler",
+    "_meta": {
+      "title": "Flux2Scheduler"
+    }
+  },
+  "22": {
+    "inputs": {
       "model": [
-        "4",
+        "12",
         0
       ],
-      "positive": [
+      "conditioning": [
+        "43",
+        0
+      ]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "BasicGuider"
+    }
+  },
+  "44": {
+    "inputs": {
+      "pixels": [
+        "45",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEEncode",
+    "_meta": {
+      "title": "VAEEncode"
+    }
+  },
+  "26": {
+    "inputs": {
+      "conditioning": [
         "6",
         0
       ],
-      "negative": [
-        "7",
+      "guidance": 4
+    },
+    "class_type": "FluxGuidance",
+    "_meta": {
+      "title": "FluxGuidance"
+    }
+  },
+  "16": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "43": {
+    "inputs": {
+      "conditioning": [
+        "26",
         0
       ],
-      "latent_image": [
-        "5",
+      "latent": [
+        "44",
         0
       ]
     },
-    "class_type": "KSampler",
+    "class_type": "ReferenceLatent",
     "_meta": {
-      "title": "KSampler"
-    }
-  },
-  "4": {
-    "inputs": {
-      "ckpt_name": "flux_dev.safetensors"
-    },
-    "class_type": "CheckpointLoaderSimple",
-    "_meta": {
-      "title": "Load Checkpoint"
-    }
-  },
-  "6": {
-    "inputs": {
-      "text": "masterpiece, best quality",
-      "clip": [
-        "4",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Positive)"
-    }
-  },
-  "7": {
-    "inputs": {
-      "text": "text, watermark, low quality",
-      "clip": [
-        "4",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "CLIP Text Encode (Negative)"
+      "title": "ReferenceLatent"
     }
   },
   "10": {
     "inputs": {
-      "image": "example.png",
+      "vae_name": "flux2-vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "VAELoader"
+    }
+  },
+  "47": {
+    "inputs": {
+      "width": [
+        "67",
+        0
+      ],
+      "height": [
+        "67",
+        1
+      ],
+      "batch_size": [
+        "67",
+        2
+      ]
+    },
+    "class_type": "EmptyFlux2LatentImage",
+    "_meta": {
+      "title": "EmptyFlux2LatentImage"
+    }
+  },
+  "13": {
+    "inputs": {
+      "noise": [
+        "25",
+        0
+      ],
+      "guider": [
+        "22",
+        0
+      ],
+      "sampler": [
+        "16",
+        0
+      ],
+      "sigmas": [
+        "48",
+        0
+      ],
+      "latent_image": [
+        "47",
+        0
+      ]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "10",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAEDecode"
+    }
+  },
+  "45": {
+    "inputs": {
+      "image": [
+        "46",
+        0
+      ],
+      "upscale_method": "lanczos",
+      "megapixels": 1
+    },
+    "class_type": "ImageScaleToTotalPixels",
+    "_meta": {
+      "title": "ImageScaleToTotalPixels"
+    }
+  },
+  "6": {
+    "inputs": {
+      "clip": [
+        "38",
+        0
+      ],
+      "text": "High quality architectural photography, realistic textures, photorealistic, 8k, highly detailed, physically based rendering. \n\n(Masterpiece), accurate lighting physics, raytracing."
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "12": {
+    "inputs": {
+      "unet_name": "flux2_dev_fp8mixed.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "UNETLoader"
+    }
+  },
+  "25": {
+    "inputs": {
+      "noise_seed": 275373301755891
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "46": {
+    "inputs": {
+      "image": "b9147190-62db-11f0-b903-f515e3045d80.jpg.webp",
       "upload": "image"
     },
     "class_type": "LoadImage",
     "_meta": {
-      "title": "Load Image"
+      "title": "LoadImage"
     }
   },
   "9": {
     "inputs": {
-      "filename_prefix": "ComfyUI",
       "images": [
         "8",
         0
-      ]
+      ],
+      "filename_prefix": "Flux2"
     },
     "class_type": "SaveImage",
     "_meta": {
-      "title": "Save Image"
+      "title": "SaveImage"
+    }
+  },
+  "38": {
+    "inputs": {
+      "clip_name": "mistral_3_small_flux2_bf16.safetensors",
+      "type": "flux2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "CLIPLoader"
+    }
+  },
+  "67": {
+    "inputs": {
+      "image": [
+        "46",
+        0
+      ]
+    },
+    "class_type": "GetImageSize",
+    "_meta": {
+      "title": "GetImageSize"
     }
   }
 }

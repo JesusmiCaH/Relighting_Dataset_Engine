@@ -1,0 +1,6 @@
+{
+  "steps": 10,
+  "cfg": 3.5,
+  "sampler_name": "euler",
+  "scheduler": "simple"
+}

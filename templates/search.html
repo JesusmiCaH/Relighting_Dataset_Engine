@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Search & Buffer{% endblock %}
+
+{% block content %}
+<div
+    style="margin-bottom: 24px; padding: 20px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+    <form action="{{ url_for('run_search') }}" method="post" style="display: flex; gap: 10px; flex-wrap: wrap;">
+        <input type="text" name="keyword" placeholder="Search Google Images (e.g. 'modern living room')"
+            style="flex: 1; padding: 10px; border-radius: var(--radius-md); border: 1px solid var(--border-color); background: #000; color: #fff;">
+
+        <button type="submit" name="mode" value="search" class="btn btn-primary">Search</button>
+        <button type="submit" name="mode" value="lucky" class="btn"
+            style="background: var(--accent-color); border: none; color: white;">
+            I'm Feeling Lucky
+        </button>
+    </form>
+</div>
+
+<!-- Upload Area -->
+<div id="dropZone"
+    style="margin-bottom: 24px; padding: 30px; border: 2px dashed var(--border-color); border-radius: var(--radius-md); text-align: center; color: var(--text-secondary); cursor: pointer; transition: 0.2s;">
+    <p style="pointer-events: none;">Drag & Drop images here or Click to Upload</p>
+    <form id="uploadForm" action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data"
+        style="display: none;">
+        <input type="file" name="file" id="fileInput" accept="image/*" onchange="this.form.submit()">
+    </form>
+</div>
+
+<script>
+    // Drag & Drop Logic
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--accent-color)';
+        dropZone.style.color = 'var(--accent-color)';
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = 'var(--border-color)';
+        dropZone.style.color = 'var(--text-secondary)';
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            fileInput.files = files;
+            document.getElementById('uploadForm').submit();
+        }
+    });
+</script>
+
+<form id="bulkForm" action="{{ url_for('search_action') }}" method="POST">
+    <!-- Floating Action Bar for Selection -->
+    <div id="actionBar" class="action-bar">
+        <span id="selectedCount">0 selected</span>
+        <div class="actions-group">
+            <button type="button" class="btn" onclick="cancelSelection()"
+                style="background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); margin-right: 10px;">Cancel</button>
+            <button type="submit" name="action" value="delete" class="btn btn-danger">Delete</button>
+            <button type="submit" name="action" value="approve" class="btn btn-primary">Approve</button>
+        </div>
+    </div>
+
+    <div class="grid">
+        {% for img in images %}
+        <!-- Interact based on mode -->
+        <div class="card" data-preview-src="{{ url_for('serve_file', filepath='buffer/' + img) }}"
+            onclick="handleCardClick(this)">
+            <div class="card-image-wrap">
+                <img src="{{ url_for('serve_file', filepath='buffer/' + img) }}" loading="lazy">
+                <div class="checkbox-overlay">
+                    <input type="checkbox" name="filename" value="{{ img }}" onclick="event.stopPropagation()">
+                </div>
+            </div>
+            <div class="card-footer">
+                <div class="card-title">{{ img }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</form>
+
+<div id="previewModal" class="modal" onclick="closePreview(event)">
+    <div class="modal-content">
+        <img id="previewImage" src="">
+    </div>
+</div>
+
+<!-- Floating Bottom Right Controls -->
+<div class="bottom-controls">
+    <!-- Clear Buffer -->
+    <form action="{{ url_for('clear_buffer') }}" method="post" onsubmit="return confirm('Clear entire buffer?');">
+        <button type="submit" class="control-btn danger-btn" data-tooltip="Clear Buffer">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+            </svg>
+        </button>
+    </form>
+
+    <!-- Segmented Control -->
+    <div class="segmented-control">
+        <div class="segment active" id="segInspect" onclick="setMode(false)" data-tooltip="Inspect Mode">
+            <!-- Icon: Menu/List (Inspect) -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </div>
+        <div class="segment" id="segSelect" onclick="setMode(true)" data-tooltip="Selection Mode">
+            <!-- Icon: Check/Grid (Select) -->
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 6L9 17l-5-5"></path>
+            </svg>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        overflow: hidden;
+        cursor: pointer;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .card:hover {
+        border-color: #555;
+        transform: translateY(-2px);
+    }
+
+    .card.selected {
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 1px var(--accent-color);
+    }
+
+    .card-image-wrap {
+        aspect-ratio: 16/9;
+        background: #000;
+        position: relative;
+    }
+
+    .card-image-wrap img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .checkbox-overlay {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        opacity: 0;
+        transition: 0.2s;
+    }
+
+    .card:hover .checkbox-overlay,
+    .card.selected .checkbox-overlay {
+        opacity: 1;
+    }
+
+    .checkbox-overlay input {
+        pointer-events: none;
+        width: 18px;
+        height: 18px;
+    }
+
+    /* Events handled by card click */
+
+    .card-footer {
+        padding: 12px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .card-title {
+        color: var(--text-secondary);
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .action-bar {
+        position: fixed;
+        bottom: 2rem;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--bg-sidebar);
+        padding: 12px 24px;
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        z-index: 100;
+        transition: transform 0.3s;
+    }
+
+    .action-bar.visible {
+        transform: translateX(-50%) translateY(0);
+    }
+
+    /* Modal */
+    .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal.active {
+        display: flex;
+    }
+
+    .modal-content img {
+        max-width: 90vw;
+        max-height: 90vh;
+        border-radius: var(--radius-md);
+    }
+
+    /* Bottom Controls */
+    .bottom-controls {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        z-index: 1000;
+    }
+
+    .control-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        border: 1px solid var(--border-color);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        position: relative;
+        /* Context for tooltip */
+    }
+
+    .control-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Tooltip Styles */
+    [data-tooltip]:hover::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        margin-bottom: 10px;
+        z-index: 2000;
+        opacity: 0;
+        animation: fadeIn 0.2s forwards;
+    }
+
+    @keyframes fadeIn {
+        to {
+            opacity: 1;
+        }
+    }
+
+    .danger-btn:hover {
+        background: #ef4444;
+        /* red-500 */
+        border-color: #ef4444;
+        color: white;
+    }
+
+    .segmented-control {
+        display: flex;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 50px;
+        /* overflow: hidden; Removed to allow tooltips */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .segment {
+        padding: 12px 20px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: 0.2s;
+        border-right: 1px solid var(--border-color);
+        position: relative;
+        /* Context for tooltip */
+    }
+
+    .segment:first-child {
+        border-top-left-radius: 50px;
+        border-bottom-left-radius: 50px;
+    }
+
+    .segment:last-child {
+        border-right: none;
+        border-top-right-radius: 50px;
+        border-bottom-right-radius: 50px;
+    }
+
+    .segment:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .segment.active {
+        background: #dbeafe;
+        /* Light blue (Tailwind blue-100) */
+        color: #1e3a8a;
+        /* Dark blue (Tailwind blue-900) */
+    }
+
+    /* Dark mode override for active segment if necessary, 
+       but for now assuming light accent or similar */
+</style>
+
+<script>
+    let isSelectMode = false;
+
+    function setMode(select) {
+        isSelectMode = select;
+
+        const segInspect = document.getElementById('segInspect');
+        const segSelect = document.getElementById('segSelect');
+
+        if (isSelectMode) {
+            segSelect.classList.add('active');
+            segInspect.classList.remove('active');
+            document.body.classList.add('select-mode-active');
+        } else {
+            segInspect.classList.add('active');
+            segSelect.classList.remove('active');
+            document.body.classList.remove('select-mode-active');
+        }
+    }
+
+    function handleCardClick(card) {
+        if (isSelectMode) {
+            toggleSelection(card);
+        } else {
+            const imgSrc = card.dataset.previewSrc;
+            openPreview(imgSrc);
+        }
+    }
+
+    function toggleSelection(card) {
+        const checkbox = card.querySelector('input[type="checkbox"]');
+        checkbox.checked = !checkbox.checked;
+        if (checkbox.checked) {
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+        updateCount();
+    }
+
+    function updateCount() {
+        const checkboxes = document.querySelectorAll('input[name="filename"]:checked');
+        const count = checkboxes.length;
+        document.getElementById('selectedCount').innerText = count + " selected";
+        const bar = document.getElementById('actionBar');
+        if (count > 0) bar.classList.add('visible'); else bar.classList.remove('visible');
+    }
+
+    function cancelSelection() {
+        const checkboxes = document.querySelectorAll('input[name="filename"]:checked');
+        checkboxes.forEach(cb => {
+            cb.checked = false;
+            const card = cb.closest('.card');
+            if (card) card.classList.remove('selected');
+        });
+        updateCount();
+    }
+
+    function openPreview(src) {
+        const modal = document.getElementById('previewModal');
+        const img = document.getElementById('previewImage');
+        img.src = src;
+        modal.classList.add('active');
+    }
+
+    function closePreview(e) {
+        if (e.target === document.getElementById('previewModal')) {
+            document.getElementById('previewModal').classList.remove('active');
+        }
+    }
+</script>
+{% endblock %}

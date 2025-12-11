@@ -4,11 +4,13 @@ A complete automation toolkit for building high-quality indoor scene datasets wi
 
 ## 🌟 Features
 
-*   **Integrated Scraper**: Automatically collect potential source images from the web.
-*   **Dataset Curator App**: A clean local web interface to review buffer images, approve them for the dataset, or discard them.
-*   **ComfyUI Automation**: Connects to your local ComfyUI instance to automatically generate **25 distinct lighting variations** for every scene (Time of Day, Temperature, Stylized).
-*   **Gallery Viewer**: Review your generated results side-by-side.
-*   **Cloud Backup**: One-click compression and upload of your dataset to Google Drive.
+*   **Integrated Scraper**: automatically crawl Google/Bing for source images.
+*   **Dataset Curator App**: A clean local web interface to review buffer images, approve them, or discard them.
+*   **ComfyUI Automation**: Connects to your local ComfyUI to automatically generate **25 distinct lighting variations** per scene.
+*   **Smart Resume**: Non-destructive processing that automatically skips existing images and resumes where it left off.
+*   **Task Queue**: Detailed, granular tracking of every generation task with a pause/resume friendly workflow.
+*   **Gallery Viewer**: Review your generated results side-by-side with a lightbox inspection tool.
+*   **Cloud Backup**: One-click compression and upload to Google Drive.
 
 ## 🛠️ Prerequisites
 
