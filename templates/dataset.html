@@ -273,76 +273,117 @@
     progress::-webkit-progress-value {
         background: var(--accent-color);
         border-radius: 2px;
+        transition: background-color 0.3s;
+    }
+
+    /* Processing State: Blue */
+    progress.processing::-webkit-progress-value {
+        background: #3b82f6;
+        /* Blue */
+    }
+
+    /* Done State: Green */
+    progress.done::-webkit-progress-value {
+        background: var(--success-color);
+        /* Green */
     }
 </style>
 
 <script>
     function updateQueueStatus() {
+        // 1. Update Grid Progress (detailed per item)
         fetch('{{ url_for("get_queue_status") }}')
             .then(response => response.json())
             .then(data => {
-                const list = document.getElementById('queueList');
-                list.innerHTML = ''; // Rebuild list
-                let hasItems = false;
-
                 for (const [scene, info] of Object.entries(data)) {
-                    // Update Grid Progress Bars
                     const statusEl = document.getElementById(`status-${scene}`);
                     const progressEl = document.getElementById(`progress-${scene}`);
                     if (statusEl && progressEl) {
-                        // User requested "12/25" style counter instead of words
                         statusEl.innerText = `${info.progress} / 25`;
                         progressEl.value = info.progress;
 
-                        // Optional: Color code the counter
-                        if (info.status === 'processing') statusEl.style.color = 'var(--accent-color)';
-                        else if (info.status === 'done') statusEl.style.color = 'var(--success-color)';
-                        else statusEl.style.color = 'var(--text-secondary)';
-                    }
+                        // Reset classes
+                        progressEl.classList.remove('processing', 'done');
 
-                    // Update Modal List (Granular)
-                    if (info.tasks && info.tasks.length > 0) {
-                        hasItems = true;
-                        // Header for Scene (Optional, but "Chrome style" usually flat or grouped)
-                        // Group by scene for clarity
-                        const groupHeader = document.createElement('li');
-                        groupHeader.style.padding = "8px 0";
-                        groupHeader.style.fontWeight = "bold";
-                        groupHeader.style.borderBottom = "1px solid #333";
-                        groupHeader.innerText = `Scene: ${scene}`;
-                        list.appendChild(groupHeader);
-
-                        info.tasks.forEach(task => {
-                            const li = document.createElement('li');
-                            li.className = 'queue-item';
-
-                            let icon = '⏳'; // Pending
-                            let color = '#777';
-                            if (task.status === 'processing') { icon = '🔄'; color = 'var(--accent-color)'; }
-                            if (task.status === 'done') { icon = '✅'; color = 'var(--success-color)'; }
-
-                            li.innerHTML = `
-                                <div style="display:flex; align-items:center; gap:10px;">
-                                    <span>${icon}</span>
-                                    <span style="font-size: 13px; color: #eee;">${task.prompt}</span>
-                                </div>
-                                <span class="status" style="color: ${color}; font-size: 11px;">${task.status}</span>
-                            `;
-                            list.appendChild(li);
-                        });
-                    } else {
-                        // Fallback simple view if no tasks (e.g. old job or just finished)
-                        hasItems = true;
-                        const li = document.createElement('li');
-                        li.className = 'queue-item';
-                        li.innerHTML = `<span>${scene}</span><span class="status">${info.status}</span>`;
-                        list.appendChild(li);
+                        if (info.status === 'processing') {
+                            statusEl.style.color = '#3b82f6';
+                            progressEl.classList.add('processing');
+                        }
+                        else if (info.status === 'done' || info.progress >= 25) {
+                            statusEl.style.color = 'var(--success-color)';
+                            progressEl.classList.add('done');
+                        }
+                        else {
+                            statusEl.style.color = 'var(--text-secondary)';
+                        }
                     }
                 }
+            })
+            .catch(err => console.error("Grid update failed", err));
 
-                if (!hasItems) {
-                    list.innerHTML = '<li style="color: var(--text-secondary); text-align: center; padding: 20px;">No active tasks in queue</li>';
+        // 2. Update Queue Overview (Popover)
+        fetch('{{ url_for("get_queue_overview") }}')
+            .then(response => response.json())
+            .then(data => {
+                const list = document.getElementById('queueList');
+                if (!list) return;
+
+                list.innerHTML = '';
+
+                // Show Pending Count
+                const pendingItem = document.createElement('li');
+                pendingItem.className = 'queue-item';
+                pendingItem.style.justifyContent = 'center';
+                const count = data.pending_count || 0;
+                pendingItem.innerHTML = `<span style="font-weight:bold; color: var(--text-primary);">${count} Requests Pending</span>`;
+                list.appendChild(pendingItem);
+
+                // Show Current Processing
+                const activeItem = document.createElement('li');
+                activeItem.className = 'queue-item';
+                activeItem.style.flexDirection = 'column';
+                activeItem.style.gap = '5px';
+
+                const tasks = data.processing_tasks || [];
+
+                if (tasks.length > 0) {
+                    activeItem.innerHTML = `<span style="font-size:11px; color:var(--text-secondary); text-transform:uppercase;">Currently Processing (${tasks.length})</span>`;
+
+                    const maxDisplay = 10;
+                    const displayTasks = tasks.slice(0, maxDisplay);
+
+                    displayTasks.forEach(task => {
+                        const div = document.createElement('div');
+                        div.style.display = 'flex';
+                        div.style.alignItems = 'center';
+                        div.style.gap = '8px';
+                        // Safe text insertion
+                        div.innerHTML = `
+                            <span style="animation: spin 1s linear infinite;">🔄</span>
+                            <span style="color: var(--accent-color); font-size: 13px;"></span>
+                        `;
+                        // Set text content safely to avoid HTML injection issues or format errors
+                        div.lastElementChild.textContent = task;
+                        activeItem.appendChild(div);
+                    });
+
+                    if (tasks.length > maxDisplay) {
+                        const more = document.createElement('div');
+                        more.style.color = 'var(--text-secondary)';
+                        more.style.fontSize = '12px';
+                        more.style.marginLeft = '20px';
+                        more.textContent = `...and ${tasks.length - maxDisplay} more`;
+                        activeItem.appendChild(more);
+                    }
+                } else {
+                    activeItem.innerHTML = `<span style="color: var(--text-secondary);">System Idle</span>`;
                 }
+                list.appendChild(activeItem);
+            })
+            .catch(err => {
+                console.error("Queue overview failed", err);
+                const list = document.getElementById('queueList');
+                if (list) list.innerHTML = '<li class="queue-item">Error loading queue</li>';
             });
     }
 

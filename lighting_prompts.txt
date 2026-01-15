@@ -1,0 +1,25 @@
+intense hard directional light from the left creating sharp horizontal shadows
+soft diffuse area light entering from the left gentle gradients
+strong directional hard light from the left casting distinct sharp horizontal shadows to the right high contrast gradient illumination across surfaces
+strong harsh light source from the right high contrast distinct shadow edges
+gentle wash of soft light from the right side wrap-around illumination
+soft diffuse area light entering from the right gentle gradients
+direct vertical top-down hard lighting short shadows underneath objects
+gentle wash of soft light from the top wrap-around illumination
+low-angle up-lighting from the floor casting dramatic upward shadows on walls
+soft balanced overhead lighting even illumination with no harsh shadows
+strong diagonal light beam from the top-left casting 45-degree angled shadows
+soft diffused lighting from the top-left corner smooth transitions
+hazy volumetric lighting from the top-right soft atmospheric glow
+dramatic low-angle light from the bottom-left corner moody atmosphere
+dramatic low-angle light from the bottom-right corner moody atmosphere
+deep directional shadow lighting from the back-left high contrast
+bright frontal flat lighting shadowless appearance high visibility
+harsh frontal flash lighting intense direct point source casting sharp hard shadows dark background falloff
+soft balanced ambient lighting uniform global illumination shadowless and flat neutral exposure
+high key overexposed lighting intense large area light source from the top-left blooming highlights washed out details minimal shadows
+high key lighting overexposed style very bright and airy minimal shadows
+strong directional light from the back-right creating pronounced rim highlights and long shadows toward the foreground
+soft low-intensity directional light from the back subtle silhouette separation with minimal surface contrast
+extremely intense directional light from the left causing severe contrast crushed shadows and clipped highlights
+very low-intensity directional light from the right dim illumination with shallow gradients and barely visible shadows

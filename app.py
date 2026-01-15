@@ -3,9 +3,10 @@ import json
 import shutil
 import threading
 import subprocess
-from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, send_file
 import scrawler
 import job_queue
+import uploader
 # import scraper (Removed V2)
 
 app = Flask(__name__)
@@ -73,17 +74,39 @@ def search_action():
         if action == 'approve':
             # V2: Approve directly to output_dataset/stem/light0.jpg
             stem = os.path.splitext(filename)[0]
-            scene_dir = os.path.join(OUTPUT_DATASET_DIR, stem)
+            
+            # Smart Naming: Check if filename has keyword
+            # Smart Naming: Check if filename has keyword
+            # Format: keyword_idx or keyword___uuid (legacy)
+            if "___" in stem:
+                keyword = stem.split("___")[0]
+            elif "_" in stem:
+                # Try to split off the index
+                parts = stem.rsplit("_", 1)
+                if len(parts) == 2 and parts[1].isdigit():
+                    keyword = parts[0]
+                else:
+                    keyword = stem
+            else:
+                keyword = stem # Fallback
+                
+            # Find next index for album
+            # Expected: keyword_01, keyword_02
+            idx = 1
+            while True:
+                candidate = f"{keyword}_{idx:02d}"
+                if not os.path.exists(os.path.join(OUTPUT_DATASET_DIR, candidate)):
+                    scene_name = candidate
+                    break
+                idx += 1
+            
+            scene_dir = os.path.join(OUTPUT_DATASET_DIR, scene_name)
             if not os.path.exists(scene_dir):
                 os.makedirs(scene_dir)
                 
-            dst = os.path.join(scene_dir, "light0" + os.path.splitext(filename)[1]) # Keep extension or force jpg?
-            # actually processor expects light0.jpg, let's rename/convert if needed or just copy
-            # flexible approach: copy as is, processor will read it
+            dst = os.path.join(scene_dir, "light0" + os.path.splitext(filename)[1])
             shutil.move(src, dst)
             
-            # Rename to standard light0.jpg if we want strictness?
-            # Let's simple move for now.
             count += 1
         elif action == 'delete':
             os.remove(src)
@@ -109,11 +132,12 @@ def run_search():
     # Clear buffer for new search? Or append? 
     # For V2 "Virtual Buffer", we might want to clear old "search results".
     # Let's clear buffer for now to keep it clean for the user.
-    for f in os.listdir(BUFFER_DIR):
-        try:
-            os.remove(os.path.join(BUFFER_DIR, f))
-        except:
-            pass
+    # Clear buffer removed as per request.
+    # for f in os.listdir(BUFFER_DIR):
+    #     try:
+    #         os.remove(os.path.join(BUFFER_DIR, f))
+    #     except:
+    #         pass
         
     # Run Crawl
     # We download 10 images
@@ -125,6 +149,10 @@ def run_search():
 @app.route('/api/queue')
 def get_queue_status():
     return job_queue.scan_all_jobs()
+
+@app.route('/api/queue/overview')
+def get_queue_overview():
+    return job_queue.get_queue_overview()
 
 @app.route('/api/delete_result', methods=['POST'])
 def delete_result():
@@ -183,7 +211,19 @@ def clear_buffer():
 @app.route('/settings')
 def view_settings():
     settings = load_settings()
-    return render_template('settings.html', settings=settings)
+    
+    # Load Prompts
+    prompts_list = []
+    if os.path.exists("lighting_prompts.txt"):
+        with open("lighting_prompts.txt", "r") as f:
+            prompts_list = [line.strip() for line in f if line.strip()]
+            
+    system_prompt_content = ""
+    if os.path.exists("system_prompt.txt"):
+        with open("system_prompt.txt", "r") as f:
+            system_prompt_content = f.read()
+            
+    return render_template('settings.html', settings=settings, prompts=prompts_list, system_prompt=system_prompt_content)
 
 @app.route('/settings/save', methods=['POST'])
 def save_settings():
@@ -197,7 +237,27 @@ def save_settings():
     settings['crawler_source'] = request.form.get('crawler_source', 'Google')
     settings['images_per_batch'] = int(request.form.get('images_per_batch', 10))
     
+    # Generation Mode
+    settings['generation_mode'] = request.form.get('generation_mode', 'local')
+    settings['api_max_parallel'] = int(request.form.get('api_max_parallel', 20))
+    
     save_settings_to_disk(settings)
+    
+    # Save Prompts
+    # Handle list input
+    prompts = request.form.getlist('lighting_prompt')
+    # Filter empty
+    prompts = [p.strip() for p in prompts if p.strip()]
+    
+    if prompts:
+        with open("lighting_prompts.txt", "w") as f:
+            f.write("\n".join(prompts))
+            
+    sys_prompt = request.form.get('system_prompt')
+    if sys_prompt:
+        with open("system_prompt.txt", "w") as f:
+            f.write(sys_prompt)
+
     flash("Settings saved!")
     return redirect(url_for('view_settings'))
 
@@ -304,8 +364,20 @@ def serve_file(filepath):
         # output/scene_name/image.png
         parts = filepath.split("/")
         if len(parts) >= 3 and parts[0] == "output":
-             real_path = os.path.join(OUTPUT_DATASET_DIR, *parts[1:-1])
-             return send_from_directory(real_path, parts[-1])
+             scene_dir = os.path.join(OUTPUT_DATASET_DIR, *parts[1:-1])
+             filename = parts[-1]
+             
+             # Fallback for light0.jpg if strict request fails but png exists
+             full_path = os.path.join(scene_dir, filename)
+             if not os.path.exists(full_path):
+                 # Try matching stem with other extensions?
+                 stem, ext = os.path.splitext(filename)
+                 if stem == "light0":
+                     for try_ext in ['.png', '.jpg', '.jpeg', '.webp']:
+                         if os.path.exists(os.path.join(scene_dir, stem + try_ext)):
+                             return send_from_directory(scene_dir, stem + try_ext)
+                             
+             return send_from_directory(scene_dir, filename)
     return "File not found", 404
 
 # ==========================================
@@ -322,9 +394,77 @@ def run_backup():
         flash("Error: credentials.json not found. Please setup Google Drive API first.")
         return redirect(url_for('view_export'))
         
+        return redirect(url_for('view_export'))
+        
     subprocess.Popen(["python3", "uploader.py"])
     flash("Started Backup to Google Drive. Check terminal for authentication link if running for first time.")
     return redirect(url_for('view_export'))
 
+@app.route('/api/download_zip', methods=['GET'])
+def download_zip():
+    try:
+        # Create Zip (Synchronous to ensure it exists before sending)
+        # Assuming dataset isn't massive, or this might timeout. 
+        # For now, synchronous is safest for "download now".
+        zip_path = uploader.create_zip_archive()
+        return send_file(zip_path, as_attachment=True)
+    except Exception as e:
+        flash(f"Error creating zip: {e}")
+        return redirect(url_for('view_export'))
+
+@app.route('/api/import_drive', methods=['POST'])
+def import_drive():
+    link_or_id = request.form.get('drive_link')
+    if not link_or_id:
+        flash("Error: No link provided.")
+        return redirect(url_for('view_export'))
+        
+    # Extract ID (simple heuristic)
+    # If it contains "drive.google.com", try to extract ID
+    file_id = link_or_id
+    if "drive.google.com" in link_or_id:
+        # Match /d/ID or id=ID
+        # V1: split by /
+        parts = link_or_id.split('/')
+        for i, part in enumerate(parts):
+            if part == 'd' and i + 1 < len(parts):
+                file_id = parts[i+1]
+                break
+        # Handle ?id=...
+        if 'id=' in link_or_id:
+             import urllib.parse
+             parsed = urllib.parse.urlparse(link_or_id)
+             params = urllib.parse.parse_qs(parsed.query)
+             if 'id' in params:
+                 file_id = params['id'][0]
+
+    # Download
+    try:
+        dest = "temp_restore.zip"
+        uploader.download_file_from_google_drive(file_id, dest)
+        if not os.path.exists(dest):
+            flash("Download failed.")
+            return redirect(url_for('view_export'))
+            
+        # Unzip
+        uploader.unzip_dataset(dest)
+        
+        # Cleanup
+        os.remove(dest)
+        
+        # Clear job queue so we rescan disk
+        job_queue.clear_all_jobs()
+        job_queue.scan_all_jobs()
+        
+        flash("Dataset restored successfully!")
+    except Exception as e:
+        flash(f"Restore failed: {e}")
+        
+    return redirect(url_for('view_export'))
+
 if __name__ == '__main__':
+    # Clear old task queue on startup as requested
+    job_queue.clear_all_jobs()
+    print("Cleared old task queue on startup.")
+    
     app.run(debug=True, port=5000)

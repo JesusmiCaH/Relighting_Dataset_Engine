@@ -1,25 +1,179 @@
 {% extends "base.html" %}
 
+{% block title %}Export & Backup{% endblock %}
+
 {% block content %}
-<h1>Export Dataset</h1>
-<p class="lead">Pack and upload your processed dataset to Google Drive.</p>
+<div style="max-width: 900px; margin: 0 auto;">
 
-<div class="card p-4 shadow-sm">
-    <h4>Google Drive Backup</h4>
-    <p>This will zip the <code>output_dataset/</code> folder and upload it to your Google Drive.</p>
-
-    <div class="alert alert-warning">
-        <strong>Prerequisites:</strong>
-        <ul>
-            <li>Ensure <code>credentials.json</code> is in the project root.</li>
-            <li>First run requires browser authentication (check terminal/pop-up).</li>
-        </ul>
+    <!-- Page Header -->
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 24px; font-weight: 700; margin-bottom: 8px;">Export Dataset</h1>
+        <p style="color: var(--text-secondary);">Manage your dataset backups and exports. Choose between cloud backup or
+            local download.</p>
     </div>
 
-    <form action="/api/backup" method="post">
-        <button type="submit" class="btn btn-success btn-lg">
-            Start Backup
-        </button>
-    </form>
+    <div class="grid-2">
+        <!-- CARD 1: Local Download -->
+        <div class="card settings-card" style="display: flex; flex-direction: column; height: 100%;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 8px; background: rgba(37, 99, 235, 0.1); color: var(--accent-color); display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 16px;">Local Download</h3>
+                        <span style="font-size: 12px; color: var(--text-secondary);">Direct Zip Archive</span>
+                    </div>
+                </div>
+
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 24px;">
+                    Create a compressed zip archive of your entire <code>output_dataset/</code> folder and download it
+                    directly to your computer. Best for quick local backups.
+                </p>
+            </div>
+
+            <a href="{{ url_for('download_zip') }}" class="btn btn-primary"
+                style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; padding: 12px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download Zip Archive
+            </a>
+        </div>
+
+        <!-- CARD 2: Google Drive -->
+        <div class="card settings-card" style="display: flex; flex-direction: column; height: 100%;">
+            <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+                    <div
+                        style="width: 40px; height: 40px; border-radius: 8px; background: rgba(22, 163, 74, 0.1); color: var(--success-color); display: flex; align-items: center; justify-content: center;">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path>
+                            <polyline points="12 11 12 17 12 7"></polyline>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 style="margin: 0; font-size: 16px;">Google Drive Backup</h3>
+                        <span style="font-size: 12px; color: var(--text-secondary);">Cloud Storage</span>
+                    </div>
+                </div>
+
+                <p style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">
+                    Upload the zip archive directly to your Google Drive.
+                </p>
+
+                <div
+                    style="background: rgba(255, 165, 0, 0.1); border: 1px solid rgba(255, 165, 0, 0.2); border-radius: 6px; padding: 12px; margin-bottom: 24px;">
+                    <div style="display: flex; gap: 10px; font-size: 12px; color: #fb923c;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" style="flex-shrink: 0; margin-top: 2px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <div>
+                            <strong>Prerequisites:</strong><br>
+                            • <code>credentials.json</code> in project root<br>
+                            • First run requires browser authentication
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form action="/api/backup" method="post">
+                <button type="submit" class="btn"
+                    style="width: 100%; justify-content: center; display: flex; align-items: center; gap: 8px; padding: 12px; background: var(--bg-hover); border-color: var(--border-color);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5" />
+                    </svg>
+                    Start Cloud Upload
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Section: Import -->
+    <div style="margin-top: 40px; margin-bottom: 24px;">
+        <h2 style="font-size: 20px; font-weight: 700; margin-bottom: 8px;">Restore Dataset</h2>
+        <p style="color: var(--text-secondary);">Import a previously backed up dataset from a Google Drive Shared Link.
+        </p>
+    </div>
+
+    <div class="card settings-card">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div
+                style="width: 40px; height: 40px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: var(--text-primary); display: flex; align-items: center; justify-content: center;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+            </div>
+            <div>
+                <h3 style="margin: 0; font-size: 16px;">Import from Google Drive Link</h3>
+                <span style="font-size: 12px; color: var(--text-secondary);">Direct Download & Unzip</span>
+            </div>
+        </div>
+
+        <form action="{{ url_for('import_drive') }}" method="POST">
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label style="display: block; margin-bottom: 8px; font-size: 13px; font-weight: 500;">Google Drive Share
+                    Link (or File ID)</label>
+                <input type="text" name="drive_link" placeholder="https://drive.google.com/file/d/..." required
+                    style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: #000; color: white;">
+                <small style="color: var(--text-secondary); margin-top: 6px; display: block;">Make sure the link is
+                    accessible (Public or 'Anyone with the link'). Only Zip files are supported.</small>
+            </div>
+            <button type="submit" class="btn" style="background: var(--text-primary); color:black; font-weight: 600;">
+                Download & Restore
+            </button>
+        </form>
+    </div>
 </div>
+
+<style>
+    .settings-card {
+        padding: 24px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        transition: var(--transition);
+    }
+
+    .settings-card:hover {
+        border-color: #555;
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 768px) {
+        .grid-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .btn-primary {
+        background-color: var(--accent-color);
+        border-color: var(--accent-color);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background-color: var(--accent-hover);
+        border-color: var(--accent-hover);
+    }
+</style>
 {% endblock %}

@@ -3,88 +3,174 @@
 {% block title %}Settings{% endblock %}
 
 {% block content %}
-<div style="max-width: 600px;">
+<div style="max-width: 800px; margin: 0 auto;">
     <form action="{{ url_for('save_settings') }}" method="POST">
-        <div class="card"
-            style="padding: 24px; background: var(--bg-card); border-radius: var(--radius-md); border: 1px solid var(--border-color);">
-            <h3 style="margin-top: 0; margin-bottom: 20px;">Generation Parameters</h3>
 
+        <!-- CARD 1: Generation Parameters -->
+        <div class="card settings-card">
+            <h3>Generation Parameters</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Sampling Steps</label>
+                    <input type="number" name="steps" value="{{ settings.get('steps', 20) }}" min="1" max="100">
+                    <small>Higher steps = better quality but slower (Default: 20)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Guidance Scale (CFG)</label>
+                    <input type="number" name="cfg" value="{{ settings.get('cfg', 3.5) }}" step="0.1" min="1.0"
+                        max="20.0">
+                    <small>How closely to follow the prompt (Default: 3.5)</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Sampler Name</label>
+                    <select name="sampler_name">
+                        <option value="euler" {% if settings.get('sampler_name')=='euler' %}selected{% endif %}>Euler
+                        </option>
+                        <option value="euler_ancestral" {% if settings.get('sampler_name')=='euler_ancestral'
+                            %}selected{% endif %}>Euler Ancestral</option>
+                        <option value="dpmpp_2m" {% if settings.get('sampler_name')=='dpmpp_2m' %}selected{% endif %}>
+                            DPM++ 2M</option>
+                        <option value="dpmpp_sde" {% if settings.get('sampler_name')=='dpmpp_sde' %}selected{% endif %}>
+                            DPM++ SDE</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Scheduler</label>
+                    <select name="scheduler">
+                        <option value="simple" {% if settings.get('scheduler')=='simple' %}selected{% endif %}>Simple
+                        </option>
+                        <option value="normal" {% if settings.get('scheduler')=='normal' %}selected{% endif %}>Normal
+                        </option>
+                        <option value="karras" {% if settings.get('scheduler')=='karras' %}selected{% endif %}>Karras
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 2: Crawler Configuration -->
+        <div class="card settings-card">
+            <h3>Crawler Configuration</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Crawler Source</label>
+                    <select name="crawler_source">
+                        <option value="Google" {% if settings.get('crawler_source', 'Google' )=='Google' %}selected{%
+                            endif %}>Google</option>
+                        <option value="Bing" {% if settings.get('crawler_source')=='Bing' %}selected{% endif %}>Bing
+                        </option>
+                        <option value="Pinterest" {% if settings.get('crawler_source')=='Pinterest' %}selected{% endif
+                            %}>Pinterest</option>
+                    </select>
+                    <small>Select the search engine for finding images.</small>
+                </div>
+
+                <div class="form-group">
+                    <label>Images Searched per Batch</label>
+                    <input type="number" name="images_per_batch" value="{{ settings.get('images_per_batch', 10) }}"
+                        min="1" max="100">
+                    <small>Number of images to fetch in a single search request (Default: 10)</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARD 3: System Prompt -->
+        <div class="card settings-card">
+            <h3>System Prompt</h3>
             <div class="form-group">
-                <label>Sampling Steps</label>
-                <input type="number" name="steps" value="{{ settings.get('steps', 20) }}" min="1" max="100">
-                <small>Higher steps = better quality but slower (Default: 20)</small>
+                <label>System Prompt (shared)</label>
+                <textarea name="system_prompt" rows="4">{{ system_prompt }}</textarea>
+                <small>Global description of style/quality.</small>
+            </div>
+        </div>
+
+        <!-- CARD 4: Lighting Prompts -->
+        <div class="card settings-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">Lighting Prompts</h3>
+                <button type="button" class="btn btn-sm" onclick="addPrompt()"
+                    style="background:var(--bg-hover); border:1px solid var(--border-color); color:var(--text-primary);">+
+                    Add</button>
             </div>
 
-            <div class="form-group">
-                <label>Guidance Scale (CFG)</label>
-                <input type="number" name="cfg" value="{{ settings.get('cfg', 3.5) }}" step="0.1" min="1.0" max="20.0">
-                <small>How closely to follow the prompt (Default: 3.5)</small>
+            <div id="promptsContainer">
+                {% for prompt in prompts %}
+                <div class="prompt-row">
+                    <span class="prompt-id">{{ loop.index }}</span>
+                    <input type="text" name="lighting_prompt" value="{{ prompt }}"
+                        placeholder="Enter lighting prompt...">
+                    <button type="button" class="btn-icon danger" onclick="removePrompt(this)" tabindex="-1">×</button>
+                </div>
+                {% endfor %}
             </div>
+            <small style="margin-top:10px; display:block;">Each prompt creates a new lighting condition variant.</small>
+        </div>
 
-            <div class="form-group">
-                <label>Sampler Name</label>
-                <select name="sampler_name">
-                    <option value="euler" {% if settings.get('sampler_name')=='euler' %}selected{% endif %}>Euler
-                    </option>
-                    <option value="euler_ancestral" {% if settings.get('sampler_name')=='euler_ancestral' %}selected{%
-                        endif %}>Euler Ancestral</option>
-                    <option value="dpmpp_2m" {% if settings.get('sampler_name')=='dpmpp_2m' %}selected{% endif %}>DPM++
-                        2M</option>
-                    <option value="dpmpp_sde" {% if settings.get('sampler_name')=='dpmpp_sde' %}selected{% endif %}>
-                        DPM++ SDE</option>
-                </select>
+        <!-- CARD 5: Generation Mode (API vs Local) -->
+        <div class="card settings-card">
+            <h3>Generation Mode</h3>
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Mode</label>
+                    <select name="generation_mode" onchange="toggleApiSettings()">
+                        <option value="local" {% if settings.get('generation_mode', 'local' )=='local' %}selected{%
+                            endif %}>Local (ComfyUI)</option>
+                        <option value="api" {% if settings.get('generation_mode')=='api' %}selected{% endif %}>Online
+                            API (Flux Official)</option>
+                    </select>
+                </div>
+
+                <div class="form-group" id="apiMaxParallelGroup" style="display:none;">
+                    <label>Max Parallel Requests</label>
+                    <input type="number" name="api_max_parallel" value="{{ settings.get('api_max_parallel', 20) }}"
+                        min="1" max="50">
+                    <small>Number of simultaneous API requests (Default: 20)</small>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label>Scheduler</label>
-                <select name="scheduler">
-                    <option value="simple" {% if settings.get('scheduler')=='simple' %}selected{% endif %}>Simple
-                    </option>
-                    <option value="normal" {% if settings.get('scheduler')=='normal' %}selected{% endif %}>Normal
-                    </option>
-                    <option value="karras" {% if settings.get('scheduler')=='karras' %}selected{% endif %}>Karras
-                    </option>
-                </select>
+            <div id="apiNote" style="display:none; margin-top:10px; color: var(--text-secondary); font-size:12px;">
+                Note: API mode requires `BFL_API_KEY` environment variable to be set.
             </div>
+        </div>
 
-            <!-- New Block: Crawler Configuration -->
-            <h3
-                style="margin-top: 32px; margin-bottom: 20px; border-top: 1px solid var(--border-color); padding-top: 24px;">
-                Crawler Configuration</h3>
-
-            <div class="form-group">
-                <label>Crawler Source</label>
-                <select name="crawler_source">
-                    <option value="Google" {% if settings.get('crawler_source', 'Google' )=='Google' %}selected{% endif
-                        %}>Google</option>
-                    <option value="Bing" {% if settings.get('crawler_source')=='Bing' %}selected{% endif %}>Bing
-                    </option>
-                    <option value="Pinterest" {% if settings.get('crawler_source')=='Pinterest' %}selected{% endif %}>
-                        Pinterest</option>
-                </select>
-                <small>Select the search engine for finding images.</small>
-            </div>
-
-            <div class="form-group">
-                <label>Images Searched per Batch</label>
-                <input type="number" name="images_per_batch" value="{{ settings.get('images_per_batch', 10) }}" min="1"
-                    max="100">
-                <small>Number of images to fetch in a single search request (Default: 10)</small>
-            </div>
-
-            <div style="margin-top: 32px;">
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Save Settings</button>
-            </div>
+        <!-- Sticky Save Bar or just bottom button -->
+        <div style="margin-top: 32px; position: sticky; bottom: 20px; z-index: 10;">
+            <button type="submit" class="btn btn-primary"
+                style="width: 100%; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">Save All Settings</button>
         </div>
     </form>
 </div>
 
 <style>
-    .form-group {
-        margin-bottom: 20px;
+    .settings-card {
+        padding: 24px;
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        margin-bottom: 24px;
     }
 
-    .form-group label {
+    .settings-card h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 18px;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 12px;
+    }
+
+    .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    label {
         display: block;
         margin-bottom: 8px;
         font-weight: 500;
@@ -92,8 +178,9 @@
         color: var(--text-secondary);
     }
 
-    .form-group input,
-    .form-group select {
+    input,
+    select,
+    textarea {
         width: 100%;
         padding: 10px;
         background: #000;
@@ -103,17 +190,118 @@
         font-family: inherit;
     }
 
-    .form-group input:focus,
-    .form-group select:focus {
+    input:focus,
+    select:focus,
+    textarea:focus {
         border-color: var(--accent-color);
         outline: none;
     }
 
-    .form-group small {
+    textarea {
+        font-family: monospace;
+    }
+
+    small {
         display: block;
         margin-top: 6px;
         font-size: 12px;
         color: #666;
     }
+
+    /* Prompts List Styling */
+    .prompt-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .prompt-id {
+        font-family: monospace;
+        color: var(--text-secondary);
+        font-size: 14px;
+        width: 24px;
+        text-align: right;
+        flex-shrink: 0;
+    }
+
+    .prompt-row input {
+        flex: 1;
+    }
+
+    .btn-icon {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+
+    .btn-icon:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .btn-icon.danger:hover {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.1);
+    }
 </style>
+
+<script>
+    function addPrompt() {
+        const container = document.getElementById('promptsContainer');
+        const count = container.children.length + 1;
+
+        const div = document.createElement('div');
+        div.className = 'prompt-row';
+        div.innerHTML = `
+            <span class="prompt-id">${count}</span>
+            <input type="text" name="lighting_prompt" placeholder="Enter lighting prompt...">
+            <button type="button" class="btn-icon danger" onclick="removePrompt(this)" tabindex="-1">×</button>
+        `;
+        container.appendChild(div);
+
+        // Focus new input
+        div.querySelector('input').focus();
+    }
+
+    function removePrompt(btn) {
+        const row = btn.closest('.prompt-row');
+        row.remove();
+        reindexPrompts();
+    }
+
+    function reindexPrompts() {
+        const rows = document.querySelectorAll('.prompt-row');
+        rows.forEach((row, index) => {
+            row.querySelector('.prompt-id').innerText = index + 1;
+        });
+    }
+
+    function toggleApiSettings() {
+        const mode = document.querySelector('select[name="generation_mode"]').value;
+        const apiGroup = document.getElementById('apiMaxParallelGroup');
+        const apiNote = document.getElementById('apiNote');
+
+        if (mode === 'api') {
+            apiGroup.style.display = 'block';
+            apiNote.style.display = 'block';
+        } else {
+            apiGroup.style.display = 'none';
+            apiNote.style.display = 'none';
+        }
+    }
+
+    // Init on load
+    document.addEventListener('DOMContentLoaded', toggleApiSettings);
+</script>
 {% endblock %}

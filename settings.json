@@ -2,5 +2,9 @@
   "steps": 10,
   "cfg": 3.5,
   "sampler_name": "euler",
-  "scheduler": "simple"
+  "scheduler": "simple",
+  "crawler_source": "Google",
+  "images_per_batch": 20,
+  "generation_mode": "api",
+  "api_max_parallel": 20
 }

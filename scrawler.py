@@ -1,3 +1,4 @@
+import uuid
 import os
 import random
 from icrawler.builtin import BingImageCrawler
@@ -46,8 +47,59 @@ def google_crawl(keyword, max_num=10, buffer_dir="buffer_temp"):
     bing_crawler = BingImageCrawler(storage={'root_dir': buffer_dir})
     bing_crawler.crawl(keyword=keyword, max_num=max_num)
     
-    # Return list of downloaded files
+    # Rename files to include keyword
+    # Pattern: keyword_idx.ext (e.g., apple_1.jpg)
     downloaded_files = []
+    
+    # Keyword safe format
+    safe_keyword = keyword.replace(' ', '_')
+    prefix = safe_keyword + "_"
+
+    # Determined start index for this keyword
+    start_idx = 1
     if os.path.exists(buffer_dir):
-        downloaded_files = [os.path.join(buffer_dir, f) for f in os.listdir(buffer_dir) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        # Scan existing files to find max index for this keyword
+        for f in os.listdir(buffer_dir):
+            if f.startswith(prefix):
+                try:
+                    # Parse index from "keyword_idx.ext"
+                    # strictly check if remainder is int to avoid collisions
+                    # e.g. "living_room_1" (keyword "living") -> remainder "room_1" -> fail
+                    # e.g. "living_room_1" (keyword "living_room") -> remainder "1" -> pass
+                    
+                    stem = os.path.splitext(f)[0]
+                    remainder = stem[len(prefix):]
+                    
+                    # Ensure remainder is just digits
+                    if remainder.isdigit():
+                        idx = int(remainder)
+                        if idx >= start_idx:
+                            start_idx = idx + 1
+                except:
+                    pass
+
+        # Rename new files
+        for f in os.listdir(buffer_dir):
+            if f.lower().endswith(('.jpg', '.jpeg', '.png', '.webp')):
+                # Check if it looks like we already renamed it in this batch or previous
+                # We need to be careful not to rename "apple_1.jpg" to "apple_1_1.jpg"
+                # Check if it matches our pattern for this logical keyword
+                already_named = False
+                if f.startswith(prefix):
+                     stem = os.path.splitext(f)[0]
+                     if stem[len(prefix):].isdigit():
+                         already_named = True
+                
+                if not already_named:
+                    ext = os.path.splitext(f)[1]
+                    new_name = f"{safe_keyword}_{start_idx}{ext}"
+                    try:
+                        os.rename(os.path.join(buffer_dir, f), os.path.join(buffer_dir, new_name))
+                        downloaded_files.append(new_name)
+                        start_idx += 1
+                    except Exception as e:
+                        print(f"Error renaming {f}: {e}")
+                else:
+                    downloaded_files.append(f)
+                    
     return downloaded_files

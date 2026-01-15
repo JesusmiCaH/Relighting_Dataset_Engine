@@ -160,7 +160,8 @@
         0
       ],
       "upscale_method": "lanczos",
-      "megapixels": 1
+      "megapixels": 1,
+      "resolution_steps": 1
     },
     "class_type": "ImageScaleToTotalPixels",
     "_meta": {

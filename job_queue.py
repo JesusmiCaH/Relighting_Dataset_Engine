@@ -20,6 +20,15 @@ def load_jobs():
             return {}
     return {}
 
+def clear_all_jobs():
+    with QUEUE_LOCK:
+        if os.path.exists(JOBS_FILE):
+             try:
+                 os.remove(JOBS_FILE)
+             except:
+                 pass
+        save_jobs({})
+
 def save_jobs(jobs):
     try:
         with open(JOBS_FILE, 'w') as f:
@@ -94,7 +103,43 @@ def scan_all_jobs():
     # Merge disk info if needed (optional, mostly relevant for fresh start)
     for scene_name in os.listdir(OUTPUT_DATASET_DIR):
         path = os.path.join(OUTPUT_DATASET_DIR, scene_name)
-        if os.path.isdir(path) and scene_name not in jobs:
-             jobs[scene_name] = get_job_status(scene_name)
+        if os.path.isdir(path):
+             # Force sync with disk
+             job = jobs.get(scene_name, {'status': 'idle', 'progress': 0, 'total': 25, 'tasks': []})
              
+             # Count actually finished files
+             files = [f for f in os.listdir(path) if f.startswith('light') and f.lower().endswith(('.jpg', '.png', '.jpeg'))]
+             real_progress = max(0, len(files) - 1) # Subtract light0
+             
+             # If disk shows more progress, update memory
+             if real_progress > job.get('progress', 0):
+                 job['progress'] = real_progress
+                 # If finished, mark as done
+                 if real_progress >= 25:
+                     job['status'] = 'done'
+                 jobs[scene_name] = job
+             elif scene_name not in jobs:
+                 # Initialize if new
+                 job['progress'] = real_progress
+                 jobs[scene_name] = job
+                 
     return jobs
+
+def get_queue_overview():
+    jobs = scan_all_jobs()
+    total_pending = 0
+    processing_tasks = []
+    
+    # Calculate pending
+    for name, job in jobs.items():
+        if 'tasks' in job:
+            for t in job['tasks']:
+                if t['status'] == 'pending':
+                    total_pending += 1
+                elif t['status'] == 'processing':
+                    processing_tasks.append(f"{name}: {t['prompt'][:30]}...")
+                    
+    return {
+        'pending_count': total_pending,
+        'processing_tasks': processing_tasks  # List of strings
+    }

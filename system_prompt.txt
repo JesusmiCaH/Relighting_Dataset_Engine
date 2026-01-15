@@ -1,0 +1,2 @@
+High quality architectural photography, realistic textures, photorealistic, 8k, highly detailed, physically based rendering. (Masterpiece), accurate lighting physics, raytracing. 
+Use the reference image only as the scene structure and material guide. Reproduce the same indoor environment with identical layout, geometry, objects, and textures. 
