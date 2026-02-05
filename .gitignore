@@ -2,3 +2,5 @@ buffer/*
 output_dataset/*
 __pycache__/*
 *.zip
+jobs.json
+key.txt
